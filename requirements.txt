@@ -1,0 +1,24 @@
+# unikube commons
+git+git://github.com/unikubehq/commons.git@1.3.1
+
+# regular pypi
+bpython
+celery==5.0.5
+Django>=2.0,<3.0
+django-extensions
+django-hurricane==0.8.8
+django-polymorphic~=3.0.0
+djangorestframework~=3.12.1
+environs~=8.0.0
+gitpython~=3.1.9
+graphene-django==2.15.0
+graphene-federation~=0.1.0
+psycopg2==2.8.6 # 18/06/2021 - fix Django Error: "database connection isn't set to UTC"
+pyyaml~=5.3.1
+redis~=3.5.3
+sentry-sdk~=0.19.5
+
+# for tests
+snapshottest~=0.6
+factory_boy~=2.9.0
+coverage~=5.3.1
