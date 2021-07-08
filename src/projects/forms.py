@@ -4,32 +4,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from projects.models import ClusterSettings, Environment, Project
 
 
-class ProjectForm(forms.ModelForm):
-    class Meta:
-        model = Project
-        fields = "__all__"
-        exclude = ["repository_status", "keycloak_data"]
-
-    def save(self, commit=True):
-        if self.errors:
-            raise ValueError(
-                "The %s could not be %s because the data didn't validate."
-                % (
-                    self.instance._meta.object_name,
-                    "created" if self.instance._state.adding else "changed",
-                )
-            )
-        if commit:
-            self.instance.save(update_repository=True)
-            # If there are no cluster settings - create some!
-            if not hasattr(self.instance, "cluster_settings"):
-                self.instance.add_cluster_settings()
-            self._save_m2m()
-        else:
-            self.save_m2m = self._save_m2m
-        return self.instance
-
-
 class EnvironmentForm(forms.ModelForm):
 
     values_path = forms.CharField(required=False)
