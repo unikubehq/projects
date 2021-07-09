@@ -1,11 +1,11 @@
 import graphene
 from commons.keycloak.abstract_models import KeycloakResource
-from commons.keycloak.groups import GroupHandler
 from commons.keycloak.users import UserHandler
+from django.shortcuts import get_object_or_404
 from graphene_django.forms.mutation import DjangoModelFormMutation
 from graphql import GraphQLError, ResolveInfo
 
-from projects.forms import ClusterSettingsForm, EnvironmentForm, ProjectForm
+from projects.forms import ClusterSettingsForm, EnvironmentForm
 from projects.models import Environment, Project
 from sops.models.aws import AWSKMS
 from sops.models.base import SOPSProvider
@@ -14,20 +14,61 @@ from sops.models.pgp import PGPKey
 from .query import ClusterSettingsNode, EnvironmentNode, ProjectNode
 
 
-class CreateUpdateProject(DjangoModelFormMutation):
+class SpecicifactionTypeEnum(graphene.Enum):
+    helm = "helm"
+
+
+class ProjectInputType(graphene.InputObjectType):
+    title = graphene.String(required=True)
+    description = graphene.String(required=False)
+    id = graphene.UUID(required=False)
+    spec_type = SpecicifactionTypeEnum(required=True)
+    spec_repository = graphene.String(required=True)
+    spec_repository_branch = graphene.String(required=True)
+    access_username = graphene.String(required=False)
+    access_token = graphene.String(required=False)
+    organization = graphene.UUID(required=True)
+
+
+class CreateUpdateProject(graphene.Mutation):
     project = graphene.Field(ProjectNode)
 
+    class Arguments:
+        input = ProjectInputType(required=True)
+
     @classmethod
-    def perform_mutate(cls, form, info):
-        result = super(CreateUpdateProject, cls).perform_mutate(form, info)
+    def mutate(cls, root, info, **kwargs):
+        project_node = kwargs.get("input")
+        if project_node.id and info.context.permissions.has_permission(str(project_node.id), "project:edit"):
+            try:
+                project_db = get_object_or_404(Project, id=project_node.id)
+                for field in project_node._meta.fields.keys():
+                    if field in project_node and getattr(project_node, field) is not None:
+                        setattr(project_db, field, getattr(project_node, field))
+                project_db.save(update_repository=True)
+            except Project.DoesNotExist:
+                raise GraphQLError("Project not found.")
+        else:
+            if project_node.organization and info.context.permissions.has_permission(
+                str(project_node.organization), "organization:projects:add"
+            ):
+                create_kwargs = {field: getattr(project_node, field) for field in project_node._meta.fields.keys()}
+                optional_fields = ["access_token", "access_username"]
+                for optional_field in optional_fields:
+                    if optional_field not in project_node or getattr(project_node, optional_field) is None:
+                        create_kwargs.update({optional_field: ""})
+                project_db = Project.objects.create(**create_kwargs)
+                project_db.add_cluster_settings()
+            else:
+                raise GraphQLError("You don't have permission to add projects to this organization.")
+
         # add this user as an administrator of this project
         uh = UserHandler()
-        admin_group = form.instance.keycloak_data["groups"].get(KeycloakResource.ADMINS)
+        admin_group = project_db.keycloak_data["groups"].get(KeycloakResource.ADMINS)
         uh.join_group(info.context.kcuser["uuid"], admin_group)
-        return result
+        return cls(project=project_db)
 
     class Meta:
-        form_class = ProjectForm
         convert_choices_to_enum = True
 
 
@@ -101,9 +142,12 @@ class DeleteProject(graphene.Mutation):
 
     @classmethod
     def mutate(cls, root, info, **kwargs):
-        obj = Project.objects.get(id=kwargs.get("id"))
-        obj.delete()
-        return cls(ok=True)
+        if info.context.permissions.has_permission(str(kwargs.get("id")), "project:edit"):
+            obj = Project.objects.get(id=kwargs.get("id"))
+            obj.delete()
+            return cls(ok=True)
+        else:
+            raise GraphQLError("This user does not have permission to remove this project.")
 
 
 class UpdateProjectRepository(graphene.Mutation):
@@ -114,9 +158,12 @@ class UpdateProjectRepository(graphene.Mutation):
 
     @classmethod
     def mutate(cls, root, info, **kwargs):
-        project = Project.objects.get(id=kwargs["id"])
-        project.update_repository()
-        return cls(ok=True)
+        if info.context.permissions.has_permission(str(kwargs.get("id")), "project:edit"):
+            project = Project.objects.get(id=kwargs["id"])
+            project.update_repository()
+            return cls(ok=True)
+        else:
+            raise GraphQLError("This user does not have permission to update the repository.")
 
 
 class SOPSTypeEnum(graphene.Enum):
