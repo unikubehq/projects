@@ -39,15 +39,18 @@ class CreateUpdateProject(graphene.Mutation):
     @classmethod
     def mutate(cls, root, info, **kwargs):
         project_node = kwargs.get("input")
-        if project_node.id and info.context.permissions.has_permission(str(project_node.id), "project:edit"):
-            try:
-                project_db = get_object_or_404(Project, id=project_node.id)
-                for field in project_node._meta.fields.keys():
-                    if field in project_node and getattr(project_node, field) is not None:
-                        setattr(project_db, field, getattr(project_node, field))
-                project_db.save(update_repository=True)
-            except Project.DoesNotExist:
-                raise GraphQLError("Project not found.")
+        if project_node.id:
+            if info.context.permissions.has_permission(str(project_node.id), "project:edit"):
+                try:
+                    project_db = get_object_or_404(Project, id=project_node.id)
+                    for field in project_node._meta.fields.keys():
+                        if field in project_node and getattr(project_node, field) is not None:
+                            setattr(project_db, field, getattr(project_node, field))
+                    project_db.save(update_repository=True)
+                except Project.DoesNotExist:
+                    raise GraphQLError("Project not found.")
+            else:
+                raise GraphQLError("No permission to edit the project.")
         else:
             if project_node.organization and info.context.permissions.has_permission(
                 str(project_node.organization), "organization:projects:add"
