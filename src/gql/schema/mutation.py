@@ -299,3 +299,4 @@ class Mutation(graphene.ObjectType):
     create_update_sops = CreateUpdateSOPS.Field()
     delete_sops = DeleteSOPS.Field()
     update_cluster_settings = UpdateClusterSettings.Field()
+    update_project_repository = UpdateProjectRepository.Field()
