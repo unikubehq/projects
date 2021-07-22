@@ -62,6 +62,7 @@ class CreateUpdateProject(graphene.Mutation):
                         create_kwargs.update({optional_field: ""})
                 project_db = Project.objects.create(**create_kwargs)
                 project_db.add_cluster_settings()
+                project_db.update_repository()
             else:
                 raise GraphQLError("You don't have permission to add projects to this organization.")
 
