@@ -17,6 +17,10 @@ def update_repository_information(self, project_id, deck_ids=None, render=False)
     if deck_ids:
         decks = project.decks.filter(pk__in=deck_ids)
     else:
+        decks_with_env = project.decks.filter(environments__isnull=False)
+        if decks_with_env.exists():
+            updater = ProjectUpdater(project, decks_with_env, render_charts=True)
+            updater.update()
         decks = None
     updater = ProjectUpdater(project, decks, render_charts=render)
     updater.update()
