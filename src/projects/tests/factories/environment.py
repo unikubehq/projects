@@ -1,6 +1,6 @@
 import factory
 
-from projects.tests.factories.deck import DeckFactory
+from projects.tests.factories.package import DeckFactory
 
 
 class EnvironmentFactory(factory.DjangoModelFactory):

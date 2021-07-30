@@ -1,0 +1,9 @@
+test:
+  first: string
+  second: number
+  third:
+    - a
+    - list
+    - of
+    - strings
+  fourth:

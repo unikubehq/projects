@@ -9,7 +9,7 @@ from graphene_django import DjangoObjectType
 from graphene_federation import extend, external, key
 from graphql import GraphQLError, ResolveInfo
 
-from projects.models import ClusterSettings, Deck, Environment, K8SDeployment, Project
+from projects.models import ClusterSettings, Deck, Environment, HelmOverrides, K8SDeployment, Project
 from sops.models.aws import AWSKMS
 from sops.models.base import SOPSProvider
 from sops.models.pgp import PGPKey
@@ -159,9 +159,20 @@ class ProjectNode(DjangoObjectType):
         model = Project
 
 
+class HelmOverridesNode(DjangoObjectType):
+    class Meta:
+        model = HelmOverrides
+        fields = (
+            "id",
+            "overrides",
+        )
+
+
 class EnvironmentNode(DjangoObjectType):
     specs_url = graphene.String()
     sops_credentials = graphene.Field(SOPSProviderNode)
+    value_schema = graphene.String()
+    helm_overrides = graphene.Field(HelmOverridesNode)
 
     def resolve_specs_url(self, info: ResolveInfo):
         return f"/manifests/{self.id}"

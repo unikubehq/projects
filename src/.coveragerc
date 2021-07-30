@@ -1,0 +1,4 @@
+[run]
+branch = True
+source = .
+omit = *migrations*, *tests*, *configuration*, *backoffice*, manage.py
