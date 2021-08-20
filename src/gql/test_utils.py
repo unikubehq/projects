@@ -1,9 +1,31 @@
+from commons.keycloak.testing.driver import KeycloakDriver
+from commons.keycloak.users import UserHandler
+from environs import Env
+
 from projects.tests.factories.project import ProjectFactory
 
 
-class SoapTestsMixin:
+class SopsTestsMixin:
     SOPS_TYPE = None
     MODEL = None
+
+    @classmethod
+    def setUpClass(cls):
+        env = Env()
+        cls.driver = KeycloakDriver(
+            env.int("KEYCLOAK_PORT"),
+            env.str("KEYCLOAK_REALM_NAME"),
+            env.str("KEYCLOAK_CLIENT_ID"),
+            env.str("KEYCLOAK_CLIENT_SECRET"),
+        )
+        cls.driver.start()
+        cls.driver.create_realm()
+        cls.driver.create_realm_client()
+
+        uh = UserHandler()
+        cls.user_id = uh.create({"username": "testface", "email": "test@unikube.io"})
+
+        super(SopsTestsMixin, cls).setUpClass()
 
     @classmethod
     def get_sops_type(cls):
@@ -49,7 +71,6 @@ class SoapTestsMixin:
         factory = self.get_factory()
         obj = factory.create(title="Test")
         sops_input = {
-            "id": str(obj.id),
             "title": new_title,
             "project": str(obj.project.id),
             "sopsType": self.get_sops_type(),
@@ -58,14 +79,14 @@ class SoapTestsMixin:
             "secret3": "",
         }
         query = """
-            mutation( $sopsData: SOPSInputType! ) {
-                createUpdateSops( sopsData: $sopsData ) {
+            mutation( $sopsData: SOPSInputType!, $id: UUID ) {
+                createUpdateSops( sopsData: $sopsData, id: $id ) {
                     ok
                 }
             }
         """
 
-        result = self.client.execute(query, variables={"sopsData": sops_input})
+        result = self.client.execute(query, variables={"sopsData": sops_input, "id": str(obj.id)})
         self.assertMatchSnapshot(result)
 
     def test_delete_sops(self):
@@ -82,3 +103,7 @@ class SoapTestsMixin:
         self.assertMatchSnapshot(result)
         model = self.get_model()
         self.assertFalse(model.objects.exists())
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.driver.stop()

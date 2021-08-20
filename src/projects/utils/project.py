@@ -5,9 +5,11 @@ import yaml
 from commons.helm.data_classes import DeckData, RenderEnvironment
 from commons.helm.exceptions import RepositoryAuthenticationFailed, RepositoryBranchUnavailable, RepositoryCloningFailed
 from commons.helm.parser import HelmRepositoryParser
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
 
 from projects.models import Environment, K8SDeployment, RepositoryStatus
+from projects.utils.value_schema import create_json_value_schema_from_string
 
 logger = logging.getLogger("projects.updater")
 
@@ -110,6 +112,11 @@ class ProjectUpdater:
             for level in environments:
                 environment = RenderEnvironment(values_path=level.values_path, specs_data=[])
                 environment.id = level.id
+                try:
+                    if level.helm_overrides.overrides:
+                        environment.update_values_from_yaml(level.helm_overrides.overrides)
+                except ObjectDoesNotExist:
+                    pass
                 deck_data.environments.append(environment)
 
         return decks_data
@@ -123,6 +130,10 @@ class ProjectUpdater:
 
     def _update_deployments(self, environment: Environment, render_env: RenderEnvironment):
         environment.deployments.all().delete()
+        if hasattr(render_env, "values_yaml"):
+            environment.value_schema = create_json_value_schema_from_string(render_env.values_yaml)
+            environment.save()
+
         for spec_data in render_env.specs_data:
             if spec_data.kind == "Deployment":
                 content = yaml.load(spec_data.content, Loader=yaml.FullLoader)

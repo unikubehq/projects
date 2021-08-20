@@ -50,6 +50,7 @@ class Deck(TitleDescriptionModel, NonUniqueSlugMixin):
                 environment.values_path != file_info["path"] for file_info in deck_data.file_information["information"]
             ):
                 environment.values_path = ""
+                environment.value_schema = ""
             environment.save()
 
 

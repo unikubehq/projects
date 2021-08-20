@@ -3,7 +3,6 @@ import uuid
 from typing import Optional
 
 from commons.keycloak.abstract_models import KeycloakResource
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models import QuerySet
 from django.db.models.aggregates import Max
@@ -137,6 +136,8 @@ class Environment(TitleDescriptionModel):
 
     namespace = models.TextField(default="default")
 
+    value_schema = models.TextField(null=True)
+
     sops_credentials = models.ForeignKey(
         "sops.SOPSProvider",
         on_delete=models.SET_NULL,
@@ -183,9 +184,9 @@ class ClusterSettings(models.Model):
 
 class HelmOverrides(models.Model):
     environment = models.OneToOneField(
-        verbose_name="Environment", to="projects.Project", on_delete=models.CASCADE, related_name="helm_overrides"
+        verbose_name="Environment", to="projects.Environment", on_delete=models.CASCADE, related_name="helm_overrides"
     )
 
-    overrides = JSONField(
+    overrides = models.TextField(
         verbose_name="overrides",
     )

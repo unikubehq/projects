@@ -6,7 +6,7 @@ from graphene_django.forms.mutation import DjangoModelFormMutation
 from graphql import GraphQLError, ResolveInfo
 
 from projects.forms import ClusterSettingsForm, EnvironmentForm
-from projects.models import Environment, Project
+from projects.models import Environment, HelmOverrides, Project
 from sops.models.aws import AWSKMS
 from sops.models.base import SOPSProvider
 from sops.models.pgp import PGPKey
@@ -293,6 +293,29 @@ class UpdateClusterSettings(DjangoModelFormMutation):
         return_field_name = "cluster_settings"
 
 
+class CreateUpdateHelmOverrides(graphene.Mutation):
+    class Arguments:
+        environment_id = graphene.UUID()
+        overrides = graphene.String()
+
+    ok = graphene.Boolean()
+
+    @classmethod
+    def mutate(cls, root, info, **kwargs):
+        environment = Environment.objects.get(id=kwargs.get("environment_id"))
+        project_id = environment.deck.project.id
+        if info.context.permissions.has_permission(str(project_id), "project:edit"):
+            HelmOverrides.objects.update_or_create(
+                environment_id=environment.id,
+                defaults={
+                    "overrides": kwargs.get("overrides"),
+                },
+            )
+        else:
+            raise GraphQLError("Environment does not exist.")
+        return cls(ok=True)
+
+
 class Mutation(graphene.ObjectType):
     create_update_project = CreateUpdateProject.Field()
     create_project_member = CreateProjectMember.Field()
@@ -304,3 +327,4 @@ class Mutation(graphene.ObjectType):
     delete_sops = DeleteSOPS.Field()
     update_cluster_settings = UpdateClusterSettings.Field()
     update_project_repository = UpdateProjectRepository.Field()
+    create_update_helm_overrides = CreateUpdateHelmOverrides.Field()

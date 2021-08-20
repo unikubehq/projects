@@ -2,7 +2,7 @@ import logging
 
 from django.db import models
 
-from .base import SOPSProvider
+from sops.models.base import SOPSProvider
 
 logger = logging.getLogger("sops.pgp")
 
