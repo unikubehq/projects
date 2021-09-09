@@ -1,5 +1,5 @@
 # unikube commons
-git+git://github.com/unikubehq/commons.git@1.6.2
+git+git://github.com/unikubehq/commons.git@1.6.3
 
 # regular pypi
 bpython
