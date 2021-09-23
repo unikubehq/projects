@@ -1,5 +1,8 @@
-Project Service
-================
+<p align="center">
+  <img src="https://raw.githubusercontent.com/unikubehq/projects/main/logo_projects.png" width="400">
+</p>
+
+# Unikube Project Service
 
 The Unikube project service.
 
