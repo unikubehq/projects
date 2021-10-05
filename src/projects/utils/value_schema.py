@@ -30,23 +30,26 @@ def create_pydantic_schema(yaml_dict: dict, model_names: List) -> (dict, List):
     fields = {}
     for key, value in yaml_dict.items():
         type_ = type(value)
+        field_name = key
+        field_kwargs = {}
+        if field_name == "schema":
+            field_name = "schemaAlias"
+            field_kwargs["alias"] = "schema"
         if type_ is dict:
             sub_fields, model_names = create_pydantic_schema(value, model_names)
-            name = get_model_name(key, model_names)
+            name = get_model_name(field_name, model_names)
             model = create_model(name, **sub_fields)
-            fields[key] = (Optional[model], None)
+            fields[field_name] = (Optional[model], None)
             model_names.append(name)
         elif type_ is list:
             if len(value):
-                fields[key] = (Optional[List[type(value[0])]], None)
+                fields[field_name] = (Optional[List[type(value[0])]], None)
             else:
-                fields[key] = (Optional[List[Any]], None)
+                fields[field_name] = (Optional[List[Any]], None)
         else:
-            fields[key] = (
+            fields[field_name] = (
                 Optional[type_],
-                Field(
-                    None,
-                ),
+                Field(None, **field_kwargs),
             )
     return fields, model_names
 

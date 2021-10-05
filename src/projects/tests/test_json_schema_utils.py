@@ -143,6 +143,26 @@ class JsonSchemaTest(TestCase):
         self.assertTrue("properties" in definitions["anotherKey"])
         self.assertTrue("name" in definitions["anotherKey"]["properties"])
 
+    def test_yaml_schema_key(self):
+        yaml = """
+        key:
+            schema: 1
+        """
+
+        result = json.loads(create_json_value_schema_from_string(yaml))
+        self.assertTrue("schema" in result)
+        schema = result["schema"]
+        self.assertTrue("properties" in schema)
+        self.assertTrue("definitions" in schema)
+        properties = schema["properties"]
+        definitions = schema["definitions"]
+        self.assertTrue("key" in properties)
+        self.assertTrue("$ref" in properties["key"])
+
+        self.assertTrue("key" in definitions)
+        self.assertTrue("properties" in definitions["key"])
+        self.assertTrue("schema" in definitions["key"]["properties"])
+
     def test_yaml_schema_creation_from_file(self):
         file_path = "projects/tests/example.yaml"
         result = json.loads(create_json_value_schema_from_file(file_path))
