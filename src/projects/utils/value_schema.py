@@ -46,6 +46,11 @@ def create_pydantic_schema(yaml_dict: dict, model_names: List) -> (dict, List):
                 fields[field_name] = (Optional[List[type(value[0])]], None)
             else:
                 fields[field_name] = (Optional[List[Any]], None)
+        elif type_ == type(None):  # noqa
+            fields[field_name] = (
+                Optional[Any],
+                Field(None, **field_kwargs),
+            )
         else:
             fields[field_name] = (
                 Optional[type_],
