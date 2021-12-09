@@ -4,7 +4,7 @@ git+git://github.com/unikubehq/commons.git@1.6.3
 # regular pypi
 bpython
 celery==5.0.5
-Django>=2.0,<3.0
+Django>=2.0,<5.0
 django-extensions
 django-hurricane==0.8.8
 django-polymorphic~=3.0.0
