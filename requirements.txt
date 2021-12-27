@@ -3,7 +3,7 @@ git+git://github.com/unikubehq/commons.git@1.7.1
 
 # regular pypi
 bpython
-celery==5.0.5
+celery==5.2.2
 Django>=2.0,<3.0
 django-extensions
 django-hurricane==0.8.8
