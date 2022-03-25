@@ -7,7 +7,7 @@ celery==5.0.5
 Django>=2.0,<3.0
 django-extensions
 django-hurricane==0.8.8
-django-polymorphic~=3.0.0
+django-polymorphic~=3.1.0
 djangorestframework~=3.12.1
 environs~=8.0.0
 gitpython~=3.1.9
