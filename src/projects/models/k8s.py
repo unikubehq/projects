@@ -20,6 +20,8 @@ class Deck(TitleDescriptionModel, NonUniqueSlugMixin):
 
     type = models.TextField()
 
+    disabled = models.BooleanField(_("Disabled"), default=False)
+
     namespace = models.TextField(
         _("Namespace"),
         help_text=_("The kubernetes namespace for the application to be deployed to."),

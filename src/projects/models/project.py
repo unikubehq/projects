@@ -30,7 +30,7 @@ class RepositoryStatus:
 
 class Project(TitleDescriptionModel, NonUniqueSlugMixin, KeycloakResource):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    SPEC_CHOICES = [("helm", "Helm")]
+    SPEC_CHOICES = [("helm", "Helm"), ("plain", "Plain"), ("kustomize", "Kustomize")]
     REPOSITORY_STATUS_CHOICES = [
         (RepositoryStatus.UNKNOWN, "Unknown"),
         (RepositoryStatus.CLONING_PENDING, "Cloning Pending"),
